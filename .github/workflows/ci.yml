@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore TechMoveMonolith.sln
+
+      - name: Build
+        run: dotnet build TechMoveMonolith.sln --configuration Release --no-restore
+
+      # Unit tests + API integration tests. A failing test blocks the pipeline,
+      # which is how "breaking changes" are caught before deployment.
+      - name: Test
+        run: dotnet test TechMove.Tests/TechMove.Tests.csproj --configuration Release --no-build --verbosity normal

@@ -1,0 +1,78 @@
+# TechMove - full ecosystem: database + backend API + MVC frontend
+# Start with:  docker compose up --build
+# Needs a .env file next to this one (copy .env.example and set a strong password).
+
+services:
+
+  # CONTAINER 1: SQL SERVER DATABASE
+  sql-server-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql-server-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: Laybow@2001
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - techmove-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+  # CONTAINER 2: BACKEND WEB API (talks to the database, issues/validates JWTs)
+  glms-backend-api:
+    build:
+      context: .
+      dockerfile: TechMove.API/Dockerfile
+    container_name: glms-backend-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sql-server-db,1433;Database=TechMoveDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-TechMove-Docker-Development-Key-2026-Change-In-Production}
+      JwtSettings__Issuer: "TechMove"
+      JwtSettings__Audience: "TechMoveApp"
+    ports:
+      - "8082:8080"
+    volumes:
+      - contract_uploads:/app/uploads
+    depends_on:
+      sql-server-db:
+        condition: service_healthy
+    networks:
+      - techmove-network
+    restart: unless-stopped
+
+  # CONTAINER 3: MVC FRONTEND (only talks to the API, never to the database)
+  glms-frontend-web:
+    build:
+      context: .
+      dockerfile: TechMove.Web/Dockerfile
+    container_name: glms-frontend-web
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ApiSettings__BaseUrl: http://glms-backend-api:8080
+    ports:
+      - "8081:8080"
+    depends_on:
+      - glms-backend-api
+    networks:
+      - techmove-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+  contract_uploads:
+
+networks:
+  techmove-network:
+    driver: bridge
