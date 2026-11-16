@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TechMove.Web/wwwroot/uploads/*
+!TechMove.Web/wwwroot/uploads/.gitkeep
+.env
+*.db
+*.db-shm
+*.db-wal
+TechMove.API/uploads/
+TechMove.Tests/**/uploads/
