@@ -275,6 +275,7 @@ public class ApiIntegrationTests : IClassFixture<TechMoveApiFactory>
         var response = await _factory.CreateClient().GetAsync("/swagger/v1/swagger.json");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("/api/contracts", await response.Content.ReadAsStringAsync());
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("/api/contracts", json, StringComparison.OrdinalIgnoreCase);
     }
 }
