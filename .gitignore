@@ -11,3 +11,6 @@ TechMove.Web/wwwroot/uploads/*
 *.db-wal
 TechMove.API/uploads/
 TechMove.Tests/**/uploads/
+node_modules/
+.netlify/*
+!.netlify/results.md
