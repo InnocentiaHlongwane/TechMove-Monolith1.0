@@ -1,0 +1,7 @@
+# TechMove on Netlify: static front end in public/, API in the Netlify Server (netlify/server).
+[build]
+  publish = "public"
+  command = "echo 'No build step required'"
+
+[build.environment]
+  NODE_VERSION = "24"
